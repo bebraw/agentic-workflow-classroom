@@ -1,11 +1,14 @@
 export const DEFAULT_ROOM_ID = "classroom";
 
-export const activityOptions = [
-  "Ask the Clarifier to name audience and success criteria",
-  "Run research and activity design in parallel after clarification",
-  "Require each handoff to include assumptions and evidence",
-  "Reject final plans when the trace does not support them",
+export const activityOptionsByStep = [
+  ["Name the audience", "Set a success criterion", "List the room and timing constraints"],
+  ["Give clarification to one agent", "Give resources to one agent", "Give evaluation to one agent"],
+  ["Clarify before any other work", "Run research and activity design in parallel", "Evaluate only after a draft plan exists"],
+  ["Include assumptions in the handoff", "Include evidence in the handoff", "Include open questions in the handoff"],
+  ["Reject unsupported claims", "Show the main trade-off", "Keep only the safest workshop plan"],
 ];
+
+export const activityOptions = activityOptionsByStep.flat();
 
 export interface ClassroomSession {
   roomId: string;

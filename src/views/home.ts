@@ -1,4 +1,4 @@
-import { DEFAULT_ROOM_ID, activityOptions } from "../api/session";
+import { DEFAULT_ROOM_ID, activityOptionsByStep } from "../api/session";
 import { escapeHtml } from "./shared";
 
 const appTitle = "Agentic Workflow Classroom";
@@ -137,7 +137,9 @@ export function renderHomePage(): string {
   const stepButtons = steps.map(renderStepButton).join("");
   const agentCards = agents.map(renderAgentCard).join("");
   const workflowRows = workflowActions.map(renderWorkflowAction).join("");
-  const activityButtons = activityOptions.map(renderActivityButton).join("");
+  const activityButtons = activityOptionsByStep
+    .map((options, stepIndex) => options.map((option) => renderActivityButton(option, stepIndex)).join(""))
+    .join("");
 
   return `<!doctype html>
 <html lang="en">
@@ -282,6 +284,7 @@ export function renderHomePage(): string {
       const defaultRoomId = ${JSON.stringify(DEFAULT_ROOM_ID)};
       const buttons = [...document.querySelectorAll("[data-step]")];
       const activityButtons = [...document.querySelectorAll("[data-activity]")];
+      const activityOptionsByStep = ${JSON.stringify(activityOptionsByStep)};
       const claimButton = document.querySelector("#claim-room");
       const releaseButton = document.querySelector("#release-room");
       const nextButton = document.querySelector("#next-step");
@@ -295,7 +298,7 @@ export function renderHomePage(): string {
       let revealedIndex = -1;
       let selectedActivity = null;
       let lecturerToken = role === "lecturer" ? window.localStorage.getItem(lecturerTokenKey(roomId)) : "";
-      let localActivityVote = role === "student" ? window.localStorage.getItem(activityVoteKey(roomId)) || "" : "";
+      let localActivityVotes = readLocalActivityVotes(roomId);
       let hasLecturerAccess = false;
 
       document.querySelector("#room-status").textContent = "Room: " + roomId;
@@ -367,14 +370,17 @@ export function renderHomePage(): string {
         setActiveStep(session.activeStepIndex, session.revealedStepIndex);
         updateRoleLinkUi(session);
         updateLecturerClaimUi(session);
-        selectedActivity = session.selectedActivity;
+        pruneLocalActivityVotes(session.activityVotes);
+        selectedActivity = selectedActivityForStep(session.activityVotes, session.activeStepIndex);
         activityButtons.forEach((button) => {
           const activity = button.dataset.activity || "";
+          const stepIndex = Number(button.dataset.activityStep || "0");
+          button.hidden = stepIndex !== session.activeStepIndex;
           const count = session.activityVotes?.[activity] || 0;
           const countElement = button.querySelector("[data-vote-count]");
           if (countElement) countElement.textContent = formatVoteCount(count);
           const isSelected = activity === selectedActivity;
-          const hasLocalVote = activity === localActivityVote;
+          const hasLocalVote = activity === localActivityVotes[String(session.activeStepIndex)];
           button.classList.toggle("border-app-accent", isSelected || hasLocalVote);
           button.classList.toggle("bg-app-accent-ghost", isSelected || hasLocalVote);
           button.setAttribute("aria-pressed", String(hasLocalVote));
@@ -405,6 +411,16 @@ export function renderHomePage(): string {
 
       function formatVoteCount(count) {
         return count + " " + (count === 1 ? "vote" : "votes");
+      }
+
+      function selectedActivityForStep(activityVotes, stepIndex) {
+        const options = activityOptionsByStep[stepIndex] || [];
+        const maxVotes = Math.max(0, ...options.map((activity) => activityVotes?.[activity] || 0));
+        if (maxVotes <= 0) {
+          return null;
+        }
+
+        return options.find((activity) => (activityVotes?.[activity] || 0) === maxVotes) || null;
       }
 
       async function postCommand(command) {
@@ -455,6 +471,41 @@ export function renderHomePage(): string {
         return "agentic-workflow-classroom/activity-vote/" + room;
       }
 
+      function readLocalActivityVotes(room) {
+        if (role !== "student") {
+          return {};
+        }
+
+        try {
+          const value = JSON.parse(window.localStorage.getItem(activityVoteKey(room)) || "{}");
+          return value && typeof value === "object" ? value : {};
+        } catch {
+          return {};
+        }
+      }
+
+      function writeLocalActivityVotes(room) {
+        window.localStorage.setItem(activityVoteKey(room), JSON.stringify(localActivityVotes));
+      }
+
+      function pruneLocalActivityVotes(activityVotes) {
+        if (role !== "student") {
+          return;
+        }
+
+        const nextLocalVotes = {};
+        for (const [stepIndex, activity] of Object.entries(localActivityVotes)) {
+          if ((activityVotes?.[activity] || 0) > 0) {
+            nextLocalVotes[stepIndex] = activity;
+          }
+        }
+
+        if (Object.keys(nextLocalVotes).length !== Object.keys(localActivityVotes).length) {
+          localActivityVotes = nextLocalVotes;
+          writeLocalActivityVotes(roomId);
+        }
+      }
+
       buttons.forEach((button, index) => {
         button.addEventListener("click", () => {
           if (role === "lecturer" && index <= revealedIndex) {
@@ -501,20 +552,21 @@ export function renderHomePage(): string {
           return;
         }
 
-        const previousActivity = localActivityVote;
+        const voteStepIndex = String(activeIndex);
+        const previousActivity = localActivityVotes[voteStepIndex] || "";
         if (previousActivity === activity) {
-          localActivityVote = "";
-          window.localStorage.removeItem(activityVoteKey(roomId));
+          delete localActivityVotes[voteStepIndex];
+          writeLocalActivityVotes(roomId);
           await postCommand({ action: "voteActivity", activity, voteDelta: -1 });
           return;
         }
 
-        localActivityVote = activity;
-        window.localStorage.setItem(activityVoteKey(roomId), activity);
+        localActivityVotes = { ...localActivityVotes, [voteStepIndex]: activity };
+        writeLocalActivityVotes(roomId);
+        await postCommand({ action: "voteActivity", activity, voteDelta: 1 });
         if (previousActivity) {
           await postCommand({ action: "voteActivity", activity: previousActivity, voteDelta: -1 });
         }
-        await postCommand({ action: "voteActivity", activity, voteDelta: 1 });
       }
 
       function normalizeRoomId(value) {
@@ -563,8 +615,9 @@ function renderWorkflowAction(action: WorkflowAction, index: number): string {
   </li>`;
 }
 
-function renderActivityButton(label: string): string {
-  return `<button type="button" class="flex items-start justify-between gap-3 border border-app-line bg-app-surface px-3 py-2 text-left text-sm leading-5 text-app-text transition hover:border-app-accent" data-activity="${escapeHtml(label)}" aria-pressed="false">
+function renderActivityButton(label: string, stepIndex: number): string {
+  const hiddenAttribute = stepIndex === 0 ? "" : " hidden";
+  return `<button type="button" class="flex items-start justify-between gap-3 border border-app-line bg-app-surface px-3 py-2 text-left text-sm leading-5 text-app-text transition hover:border-app-accent" data-activity="${escapeHtml(label)}" data-activity-step="${stepIndex}" aria-pressed="false"${hiddenAttribute}>
     <span>${escapeHtml(label)}</span>
     <span class="shrink-0 font-semibold text-app-accent-strong" data-vote-count>0 votes</span>
   </button>`;

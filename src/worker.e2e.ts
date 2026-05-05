@@ -38,12 +38,16 @@ test("keeps student view controlled by lecturer reveal state", async ({ browser 
   await expect(student.getByText("What To Notice")).toBeHidden();
   await expect(student.getByText("Pedagogy Lens")).toBeHidden();
   await expect(student.getByText("The lecturer uses the group choice")).toBeHidden();
+  await expect(student.getByRole("button", { name: /Name the audience/ })).toBeVisible();
+  await expect(student.getByRole("button", { name: /Give clarification to one agent/ })).toBeHidden();
   await expect(student.getByRole("link", { name: /Lecturer view/i })).toBeVisible();
 
   await lecturer.getByRole("button", { name: /Claim room/i }).click();
   await expect(student.getByRole("link", { name: /Lecturer view/i })).toBeHidden({ timeout: 3000 });
   await lecturer.getByRole("button", { name: /Reveal next step/i }).click();
   await expect(student.getByRole("button", { name: /Give Each Agent One Job/i })).toBeVisible({ timeout: 3000 });
+  await expect(student.getByRole("button", { name: /Name the audience/ })).toBeHidden({ timeout: 3000 });
+  await expect(student.getByRole("button", { name: /Give clarification to one agent/ })).toBeVisible();
 
   await lecturer.close();
   await student.close();
@@ -94,37 +98,42 @@ test("shares student activity votes across the room", async ({ browser }) => {
 
   await lecturer.goto(`/?room=${room}&role=lecturer`);
   await student.goto(`/?room=${room}&role=student`);
-  await student.getByRole("button", { name: /Require each handoff/ }).click();
+  await student.getByRole("button", { name: /Name the audience/ }).click();
 
-  await expect(student.getByRole("button", { name: /Require each handoff.*1 vote/ })).toBeVisible({
+  await expect(student.getByRole("button", { name: /Name the audience.*1 vote/ })).toBeVisible({
     timeout: 3000,
   });
-  await expect(student.getByText("Group choice: Require each handoff to include assumptions and evidence.")).toBeVisible({
+  await expect(student.getByText("Group choice: Name the audience.")).toBeVisible({
     timeout: 3000,
   });
   await expect(student.getByText("Ask students which workflow artifact must change next")).toBeHidden();
-  await expect(lecturer.getByText("Group choice: Require each handoff to include assumptions and evidence")).toBeVisible({
+  await expect(lecturer.getByText("Group choice: Name the audience")).toBeVisible({
     timeout: 3000,
   });
 
-  await student.getByRole("button", { name: /Ask the Clarifier/ }).click();
-  await expect(student.getByRole("button", { name: /Require each handoff.*0 votes/ })).toBeVisible({
+  await student.getByRole("button", { name: /Set a success criterion/ }).click();
+  await expect(student.getByRole("button", { name: /Name the audience.*0 votes/ })).toBeVisible({
     timeout: 3000,
   });
-  await expect(student.getByRole("button", { name: /Ask the Clarifier.*1 vote/ })).toBeVisible({
+  await expect(student.getByRole("button", { name: /Set a success criterion.*1 vote/ })).toBeVisible({
     timeout: 3000,
   });
-  await expect(student.getByText("Group choice: Ask the Clarifier to name audience and success criteria.")).toBeVisible({
+  await expect(student.getByText("Group choice: Set a success criterion.")).toBeVisible({
     timeout: 3000,
   });
 
-  await student.getByRole("button", { name: /Ask the Clarifier/ }).click();
-  await expect(student.getByRole("button", { name: /Ask the Clarifier.*0 votes/ })).toBeVisible({
+  await student.getByRole("button", { name: /Set a success criterion/ }).click();
+  await expect(student.getByRole("button", { name: /Set a success criterion.*0 votes/ })).toBeVisible({
     timeout: 3000,
   });
   await expect(student.getByText("No group choice selected yet.")).toBeVisible({
     timeout: 3000,
   });
+
+  await lecturer.getByRole("button", { name: /Claim room/i }).click();
+  await lecturer.getByRole("button", { name: /Reveal next step/i }).click();
+  await expect(student.getByRole("button", { name: /Give clarification to one agent/ })).toBeVisible({ timeout: 3000 });
+  await expect(student.getByRole("button", { name: /Name the audience/ })).toBeHidden();
 
   await lecturer.close();
   await student.close();
