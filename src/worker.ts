@@ -1,4 +1,5 @@
 import { createHealthResponse } from "./api/health";
+import { handleSessionRequest } from "./api/session";
 import { exampleRoutes } from "./app-routes";
 import { renderHomePage } from "./views/home";
 import { renderNotFoundPage } from "./views/not-found";
@@ -18,11 +19,15 @@ export async function handleRequest(request: Request): Promise<Response> {
   }
 
   if (url.pathname === "/") {
-    return htmlResponse(renderHomePage(exampleRoutes));
+    return htmlResponse(renderHomePage());
   }
 
   if (url.pathname === "/api/health") {
     return createHealthResponse(exampleRoutes.map((route) => route.path));
+  }
+
+  if (url.pathname === "/api/session") {
+    return await handleSessionRequest(request);
   }
 
   return htmlResponse(renderNotFoundPage(url.pathname), 404);

@@ -5,15 +5,15 @@ import { ensureGeneratedStylesheet } from "./test-support";
 ensureGeneratedStylesheet();
 
 describe("worker", () => {
-  it("renders the stub home page", async () => {
+  it("renders the classroom home page", async () => {
     const response = await handleRequest(new Request("http://example.com/"));
 
     expect(response.status).toBe(200);
     expect(response.headers.get("content-type")).toContain("text/html");
 
     const body = await response.text();
-    expect(body).toContain("vibe-template Worker");
-    expect(body).toContain("/api/health");
+    expect(body).toContain("Agentic Workflow Classroom");
+    expect(body).toContain("Student Activity");
   });
 
   it("returns a JSON health response", async () => {
@@ -23,8 +23,21 @@ describe("worker", () => {
     expect(response.headers.get("content-type")).toContain("application/json");
     await expect(response.json()).resolves.toEqual({
       ok: true,
-      name: "vibe-template-worker",
-      routes: ["/", "/api/health"],
+      name: "agentic-workflow-classroom",
+      routes: ["/", "/api/session", "/api/health"],
+    });
+  });
+
+  it("serves shared classroom session state", async () => {
+    const response = await handleRequest(new Request("http://example.com/api/session?room=worker-test"));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      ok: true,
+      session: {
+        roomId: "worker-test",
+        activeStepIndex: 0,
+      },
     });
   });
 

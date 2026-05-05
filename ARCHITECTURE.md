@@ -7,6 +7,9 @@ Use this file for global constraints. Use feature specs under `specs/` for domai
 ## Global Rules
 
 - Keep the template lightweight, reusable, easy to clone, and easy to prune.
+- Treat the primary application surface as a deterministic classroom demo for agentic workflow concepts, not as a free-form workflow builder.
+- Keep the first-run teaching path local and account-free; remote AI calls, backend persistence, or shared-room infrastructure require an explicit spec and ADR update.
+- Treat the current lecturer/student room model as lightweight classroom scaffolding backed by in-memory Worker state, not as authentication or durable collaboration infrastructure.
 - Treat repo documentation as living context that should evolve with the code.
 - Treat architectural decisions as explicit records, not implicit tribal knowledge.
 - Treat specs and ADRs as the durable source of truth for expected behavior and architectural intent. Code, including AI-generated code, is only acceptable when it matches those documents or updates them intentionally in the same change set.
