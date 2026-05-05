@@ -285,6 +285,8 @@ export function renderHomePage(): string {
       const releaseButton = document.querySelector("#release-room");
       const nextButton = document.querySelector("#next-step");
       const resetButton = document.querySelector("#reset-room");
+      const lecturerLink = document.querySelector("#lecturer-link");
+      const studentLink = document.querySelector("#student-link");
       const params = new URLSearchParams(window.location.search);
       const roomId = normalizeRoomId(params.get("room") || defaultRoomId);
       const role = params.get("role") === "student" ? "student" : "lecturer";
@@ -299,8 +301,9 @@ export function renderHomePage(): string {
       document.querySelectorAll("[data-lecturer-status], [data-lecturer-status-separator]").forEach((element) => {
         element.hidden = role !== "lecturer";
       });
-      document.querySelector("#lecturer-link").href = "/?room=" + encodeURIComponent(roomId) + "&role=lecturer";
-      document.querySelector("#student-link").href = "/?room=" + encodeURIComponent(roomId) + "&role=student";
+      lecturerLink.href = "/?room=" + encodeURIComponent(roomId) + "&role=lecturer";
+      studentLink.href = "/?room=" + encodeURIComponent(roomId) + "&role=student";
+      lecturerLink.hidden = role === "student";
       document.querySelectorAll("[data-lecturer-controls]").forEach((element) => {
         element.hidden = role !== "lecturer";
       });
@@ -357,6 +360,7 @@ export function renderHomePage(): string {
         }
 
         setActiveStep(session.activeStepIndex, session.revealedStepIndex);
+        updateRoleLinkUi(session);
         updateLecturerClaimUi(session);
         selectedActivity = session.selectedActivity;
         activityButtons.forEach((button) => {
@@ -372,6 +376,10 @@ export function renderHomePage(): string {
         document.querySelector("#activity-result").textContent = selectedActivity
           ? "Group choice: " + selectedActivity + ". Ask students which workflow artifact must change next."
           : "No group choice selected yet.";
+      }
+
+      function updateRoleLinkUi(session) {
+        lecturerLink.hidden = role === "student" && session.lecturerClaimed;
       }
 
       async function postCommand(command) {

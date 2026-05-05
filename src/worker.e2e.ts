@@ -34,8 +34,10 @@ test("keeps student view controlled by lecturer reveal state", async ({ browser 
   await expect(student.getByRole("button", { name: /Claim room/i })).toBeHidden();
   await expect(student.getByRole("button", { name: /Reveal next step/i })).toBeHidden();
   await expect(student.getByRole("button", { name: /Give Each Agent One Job/i })).toBeHidden();
+  await expect(student.getByRole("link", { name: /Lecturer view/i })).toBeVisible();
 
   await lecturer.getByRole("button", { name: /Claim room/i }).click();
+  await expect(student.getByRole("link", { name: /Lecturer view/i })).toBeHidden({ timeout: 3000 });
   await lecturer.getByRole("button", { name: /Reveal next step/i }).click();
   await expect(student.getByRole("button", { name: /Give Each Agent One Job/i })).toBeVisible({ timeout: 3000 });
 

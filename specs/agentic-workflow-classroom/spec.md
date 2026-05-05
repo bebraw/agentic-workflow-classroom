@@ -12,7 +12,7 @@ The app teaches agentic workflow basics to students who do not yet know the topi
 - **Teaching model:** The demo progresses through `Baseline`, `Step 1`, `Step 2`, `Step 3`, and `Step 4`.
 - **Concept order:** The steps introduce request ambiguity, agent roles, workflow sequencing and parallelism, handoff packets, and evaluation.
 - **State model:** Room state is in-memory Worker state keyed by room id. It is suitable for local classroom rehearsal and short demos, but it is not durable storage. Lecturer claims use a local browser token stored in `localStorage`. No account, remote AI call, KV, Durable Object, or secret is required.
-- **Role model:** `role=lecturer` exposes controls for claiming and releasing room control. Only the lecturer device holding the claim can reveal steps, select active steps, or reset the room. `role=student` hides lecturer controls, shows only revealed steps, and lets students contribute activity votes.
+- **Role model:** `role=lecturer` exposes controls for claiming and releasing room control. Only the lecturer device holding the claim can reveal steps, select active steps, or reset the room. `role=student` hides lecturer controls, shows only revealed steps, hides the lecturer view switcher while the room is claimed, and lets students contribute activity votes.
 - **Visual model:** Wider screens use a three-column classroom layout: lesson path on the left, workflow board in the middle, and pedagogy lens on the right. Smaller screens stack the same sections.
 - **Domain anchor:** The visible classroom request is a 45-minute beginner AI workshop plan because it naturally exposes clarification, resource research, activity design, handoffs, and evaluation.
 
@@ -38,6 +38,7 @@ The app teaches agentic workflow basics to students who do not yet know the topi
 - [ ] The claiming lecturer can release the room claim.
 - [ ] The claiming lecturer can reset the room while keeping the room claimed.
 - [ ] Student browsers hide lecturer reveal/reset controls.
+- [ ] Student browsers hide the lecturer view option while the room is claimed.
 - [ ] Student browsers see later steps only after the lecturer reveals them for the shared room.
 - [ ] Each step includes a learning goal, a room question, a notice prompt, and a timebox.
 - [ ] The workflow board shows named agents with explicit jobs, inputs, and outputs.
@@ -55,6 +56,7 @@ The app teaches agentic workflow basics to students who do not yet know the topi
 - Room state may be in-memory and non-durable, but that limitation must stay visible in docs until a Durable Object or other persistent room model is intentionally added.
 - Lecturer claim tokens are classroom coordination, not a security boundary.
 - Lecturer controls must stay hidden from student URLs.
+- The lecturer view option must stay hidden from student URLs while another device holds the room claim.
 - Reveal, step selection, reset, and release commands must require the current room claim token.
 - The first screen must not require students to understand a builder UI before seeing the staged example.
 - Later steps must stay hidden until the lecturer reveals them.
@@ -110,7 +112,7 @@ The app teaches agentic workflow basics to students who do not yet know the topi
 
 - Given: the lecturer and a student open the same room id
 - When: the student opens the app with `role=student`
-- Then: the student cannot see reveal/reset controls and only sees steps the lecturer has revealed
+- Then: the student cannot see reveal/reset controls, cannot see the lecturer view option while the room is claimed, and only sees steps the lecturer has revealed
 
 **Scenario: Lecturer reveals content to students**
 
