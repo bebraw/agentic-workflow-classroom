@@ -294,6 +294,7 @@ export function renderHomePage(): string {
       let revealedIndex = -1;
       let selectedActivity = null;
       let lecturerToken = role === "lecturer" ? window.localStorage.getItem(lecturerTokenKey(roomId)) : "";
+      let localActivityVote = role === "student" ? window.localStorage.getItem(activityVoteKey(roomId)) || "" : "";
       let hasLecturerAccess = false;
 
       document.querySelector("#room-status").textContent = "Room: " + roomId;
@@ -370,10 +371,12 @@ export function renderHomePage(): string {
           const activity = button.dataset.activity || "";
           const count = session.activityVotes?.[activity] || 0;
           const countElement = button.querySelector("[data-vote-count]");
-          if (countElement) countElement.textContent = String(count);
+          if (countElement) countElement.textContent = formatVoteCount(count);
           const isSelected = activity === selectedActivity;
-          button.classList.toggle("border-app-accent", isSelected);
-          button.classList.toggle("bg-app-accent-ghost", isSelected);
+          const hasLocalVote = activity === localActivityVote;
+          button.classList.toggle("border-app-accent", isSelected || hasLocalVote);
+          button.classList.toggle("bg-app-accent-ghost", isSelected || hasLocalVote);
+          button.setAttribute("aria-pressed", String(hasLocalVote));
         });
 
         document.querySelector("#activity-help").textContent =
@@ -397,6 +400,10 @@ export function renderHomePage(): string {
         }
 
         return "Group choice: " + activity + ".";
+      }
+
+      function formatVoteCount(count) {
+        return count + " " + (count === 1 ? "vote" : "votes");
       }
 
       async function postCommand(command) {
@@ -443,6 +450,10 @@ export function renderHomePage(): string {
         return "agentic-workflow-classroom/lecturer-token/" + room;
       }
 
+      function activityVoteKey(room) {
+        return "agentic-workflow-classroom/activity-vote/" + room;
+      }
+
       buttons.forEach((button, index) => {
         button.addEventListener("click", () => {
           if (role === "lecturer" && index <= revealedIndex) {
@@ -477,9 +488,33 @@ export function renderHomePage(): string {
 
       activityButtons.forEach((button) => {
         button.addEventListener("click", () => {
-          void postCommand({ action: "voteActivity", activity: button.dataset.activity });
+          const activity = button.dataset.activity || "";
+          if (!activity) return;
+          void handleActivityVote(activity);
         });
       });
+
+      async function handleActivityVote(activity) {
+        if (role !== "student") {
+          await postCommand({ action: "voteActivity", activity, voteDelta: 1 });
+          return;
+        }
+
+        const previousActivity = localActivityVote;
+        if (previousActivity === activity) {
+          localActivityVote = "";
+          window.localStorage.removeItem(activityVoteKey(roomId));
+          await postCommand({ action: "voteActivity", activity, voteDelta: -1 });
+          return;
+        }
+
+        localActivityVote = activity;
+        window.localStorage.setItem(activityVoteKey(roomId), activity);
+        if (previousActivity) {
+          await postCommand({ action: "voteActivity", activity: previousActivity, voteDelta: -1 });
+        }
+        await postCommand({ action: "voteActivity", activity, voteDelta: 1 });
+      }
 
       function normalizeRoomId(value) {
         const room = String(value || "").trim().toLowerCase().replace(/[^a-z0-9-]/g, "-").slice(0, 48);
@@ -528,8 +563,8 @@ function renderWorkflowAction(action: WorkflowAction, index: number): string {
 }
 
 function renderActivityButton(label: string): string {
-  return `<button type="button" class="flex items-start justify-between gap-3 border border-app-line bg-app-surface px-3 py-2 text-left text-sm leading-5 text-app-text transition hover:border-app-accent" data-activity="${escapeHtml(label)}">
+  return `<button type="button" class="flex items-start justify-between gap-3 border border-app-line bg-app-surface px-3 py-2 text-left text-sm leading-5 text-app-text transition hover:border-app-accent" data-activity="${escapeHtml(label)}" aria-pressed="false">
     <span>${escapeHtml(label)}</span>
-    <span class="shrink-0 font-semibold text-app-accent-strong" data-vote-count>0</span>
+    <span class="shrink-0 font-semibold text-app-accent-strong" data-vote-count>0 votes</span>
   </button>`;
 }

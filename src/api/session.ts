@@ -22,6 +22,7 @@ interface SessionCommand {
   action?: string;
   stepIndex?: number;
   activity?: string;
+  voteDelta?: number;
   lecturerToken?: string;
 }
 
@@ -85,8 +86,14 @@ function getSession(roomId: string): StoredClassroomSession {
 
 function applyCommand(session: StoredClassroomSession, command: SessionCommand): { hasLecturerAccess: boolean; lecturerToken?: string } {
   if (command.action === "voteActivity" && isKnownActivity(command.activity)) {
-    session.activityVotes[command.activity] = (session.activityVotes[command.activity] ?? 0) + 1;
-    session.selectedActivity = command.activity;
+    const voteDelta = command.voteDelta === -1 ? -1 : 1;
+    const nextVotes = Math.max(0, (session.activityVotes[command.activity] ?? 0) + voteDelta);
+    if (nextVotes === 0) {
+      delete session.activityVotes[command.activity];
+    } else {
+      session.activityVotes[command.activity] = nextVotes;
+    }
+    session.selectedActivity = resolveSelectedActivity(session.activityVotes);
     session.version += 1;
     return { hasLecturerAccess: hasLecturerAccess(session, command.lecturerToken) };
   }
@@ -186,6 +193,15 @@ function clampStep(value: number, revealedStepIndex: number): number {
 
 function isKnownActivity(value: string | undefined): value is string {
   return typeof value === "string" && activityOptions.includes(value);
+}
+
+function resolveSelectedActivity(activityVotes: Record<string, number>): string | null {
+  const maxVotes = Math.max(...activityOptions.map((activity) => activityVotes[activity] ?? 0));
+  if (maxVotes <= 0) {
+    return null;
+  }
+
+  return activityOptions.find((activity) => (activityVotes[activity] ?? 0) === maxVotes) ?? null;
 }
 
 function hasLecturerAccess(session: StoredClassroomSession, lecturerToken: string | null | undefined): boolean {

@@ -159,6 +159,7 @@ describe("handleSessionRequest", () => {
 
   it("ignores student attempts to reveal steps but accepts votes", async () => {
     const activity = activityOptions[0] ?? "";
+    const otherActivity = activityOptions[1] ?? "";
     const revealResponse = await handleSessionRequest(
       new Request("http://example.com/api/session?room=unit-student", {
         method: "POST",
@@ -187,6 +188,60 @@ describe("handleSessionRequest", () => {
         selectedActivity: activity,
         activityVotes: {
           [activity]: 1,
+        },
+      },
+    });
+
+    const otherVoteResponse = await handleSessionRequest(
+      new Request("http://example.com/api/session?room=unit-student", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ role: "student", action: "voteActivity", activity: otherActivity, voteDelta: 1 }),
+      }),
+    );
+
+    await expect(otherVoteResponse.json()).resolves.toMatchObject({
+      session: {
+        selectedActivity: activity,
+        activityVotes: {
+          [activity]: 1,
+          [otherActivity]: 1,
+        },
+      },
+    });
+
+    const leadingVoteResponse = await handleSessionRequest(
+      new Request("http://example.com/api/session?room=unit-student", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ role: "student", action: "voteActivity", activity: otherActivity, voteDelta: 1 }),
+      }),
+    );
+
+    await expect(leadingVoteResponse.json()).resolves.toMatchObject({
+      session: {
+        selectedActivity: otherActivity,
+        activityVotes: {
+          [activity]: 1,
+          [otherActivity]: 2,
+        },
+      },
+    });
+
+    const removedVoteResponse = await handleSessionRequest(
+      new Request("http://example.com/api/session?room=unit-student", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ role: "student", action: "voteActivity", activity: otherActivity, voteDelta: -1 }),
+      }),
+    );
+
+    await expect(removedVoteResponse.json()).resolves.toMatchObject({
+      session: {
+        selectedActivity: activity,
+        activityVotes: {
+          [activity]: 1,
+          [otherActivity]: 1,
         },
       },
     });
