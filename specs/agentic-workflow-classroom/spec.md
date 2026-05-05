@@ -13,7 +13,7 @@ The app teaches agentic workflow basics to students who do not yet know the topi
 - **Concept order:** The steps introduce request ambiguity, agent roles, workflow sequencing and parallelism, handoff packets, and evaluation.
 - **State model:** Room state is in-memory Worker state keyed by room id. It is suitable for local classroom rehearsal and short demos, but it is not durable storage. Lecturer claims use a local browser token stored in `localStorage`. No account, remote AI call, KV, Durable Object, or secret is required.
 - **Role model:** `role=lecturer` exposes controls for claiming and releasing room control. Only the lecturer device holding the claim can reveal steps, select active steps, or reset the room. `role=student` hides lecturer controls, lecturer-only teaching notes, and the lecturer view switcher while the room is claimed, shows only revealed steps, and lets students contribute activity votes.
-- **Voting model:** Student activity options follow the French cheese shop demo pattern for the active lesson step: each student browser keeps one local vote in the current step's activity group, switching choices removes the previous vote for that step, pressing the same choice again removes that vote, visible counts update for the room, and the leading option for the current step becomes the group choice.
+- **Voting model:** Student activity options follow the French cheese shop demo pattern for the active lesson step: each student browser keeps one local vote in the current step's activity group, switching choices removes the previous vote for that step, pressing the same choice again removes that vote, visible counts update for the room, and the leading option for the current step becomes the group choice. Lecturer browsers can observe counts but do not cast student votes.
 - **Visual model:** Wider screens use a three-column classroom layout: lesson path on the left, workflow board in the middle, and pedagogy lens on the right. Smaller screens stack the same sections.
 - **Domain anchor:** The visible classroom request is a 45-minute beginner AI workshop plan because it naturally exposes clarification, resource research, activity design, handoffs, and evaluation.
 
@@ -51,6 +51,7 @@ The app teaches agentic workflow basics to students who do not yet know the topi
 - [ ] Student activity choices post room-level votes that other joined browsers can see.
 - [ ] Student activity choices match the active lesson step instead of showing future-step concepts early.
 - [ ] Student activity voting lets a browser switch or remove its vote without inflating counts.
+- [ ] Lecturer browsers see student activity counts as read-only controls.
 - [ ] The pedagogy lens keeps the lesson concrete and warns against hidden model magic.
 - [ ] Automated tests cover page rendering, health response, and step reveal behavior.
 
@@ -72,6 +73,7 @@ The app teaches agentic workflow basics to students who do not yet know the topi
 - The activity choices should be scoped to the active step so students vote on the concept currently being taught.
 - Student votes should stay visible as group activity, not as private per-browser state.
 - Student vote controls should show vote counts, preserve each browser's local vote for each step, clear stale local votes after shared reset, and derive the group choice from the leading room count for the active step.
+- Lecturer browsers should use the student activity result as a discussion prompt without accidentally changing vote counts.
 - The classroom surface should not create page-level horizontal scrolling on phone-sized viewports; wide workflow tables should scroll inside their own container.
 - Agent cards should not allow headings or body copy to overflow their card boundaries on common desktop classroom projector widths.
 - The health endpoint should remain stable for smoke tests.
@@ -150,6 +152,12 @@ The app teaches agentic workflow basics to students who do not yet know the topi
 - Given: a student has voted for one activity choice
 - When: the student chooses a different activity choice
 - Then: the previous choice loses that student's vote, the new choice gains it, and the room choice follows the updated counts
+
+**Scenario: Lecturer observes student activity**
+
+- Given: students have voted in the current activity group
+- When: the lecturer views the student activity panel
+- Then: the lecturer sees the active topic, counts, and group choice without being able to cast a student vote
 
 **Scenario: Lecturer advances to the next voting topic**
 

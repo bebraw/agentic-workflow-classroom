@@ -240,8 +240,9 @@ export function renderHomePage(): string {
 
             <section class="min-w-0 border border-app-line bg-white/88 p-4 shadow-panel sm:p-5">
               <p class="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-app-accent">Student Activity</p>
+              <p id="activity-topic" class="mt-2 text-lg font-semibold leading-tight tracking-normal text-app-text">Baseline choice</p>
               <p id="activity-help" class="mt-2 text-sm leading-6 text-app-text-soft">Students vote together on one improvement. The lecturer uses the group choice to explain what changes in the workflow.</p>
-              <div class="mt-4 grid gap-2" role="group" aria-label="Classroom activity choices">${activityButtons}</div>
+              <div id="activity-choices" class="mt-4 grid gap-2" role="group" aria-label="Classroom activity choices">${activityButtons}</div>
               <p id="activity-result" class="mt-4 border-t border-app-line pt-4 text-sm leading-6 text-app-text-soft" aria-live="polite">No group choice selected yet.</p>
             </section>
           </section>
@@ -346,6 +347,8 @@ export function renderHomePage(): string {
         nextButton.disabled = !hasLecturerAccess || nextRevealedIndex >= steps.length - 1;
         nextButton.textContent = nextRevealedIndex >= steps.length - 1 ? "All steps revealed" : "Reveal next step";
         nextButton.classList.toggle("opacity-70", !hasLecturerAccess || nextRevealedIndex >= steps.length - 1);
+        document.querySelector("#student-visibility-note").textContent =
+          nextRevealedIndex >= steps.length - 1 ? "All lesson steps are visible." : "Waiting for the lecturer to reveal the next step.";
       }
 
       async function loadSession() {
@@ -376,6 +379,7 @@ export function renderHomePage(): string {
           const activity = button.dataset.activity || "";
           const stepIndex = Number(button.dataset.activityStep || "0");
           button.hidden = stepIndex !== session.activeStepIndex;
+          button.disabled = role === "lecturer";
           const count = session.activityVotes?.[activity] || 0;
           const countElement = button.querySelector("[data-vote-count]");
           if (countElement) countElement.textContent = formatVoteCount(count);
@@ -383,13 +387,17 @@ export function renderHomePage(): string {
           const hasLocalVote = activity === localActivityVotes[String(session.activeStepIndex)];
           button.classList.toggle("border-app-accent", isSelected || hasLocalVote);
           button.classList.toggle("bg-app-accent-ghost", isSelected || hasLocalVote);
+          button.classList.toggle("cursor-default", role === "lecturer");
           button.setAttribute("aria-pressed", String(hasLocalVote));
         });
 
+        const activityTopic = steps[session.activeStepIndex]?.title || "Current step";
+        document.querySelector("#activity-topic").textContent = activityTopic + " choice";
+        document.querySelector("#activity-choices").setAttribute("aria-label", "Activity choices for " + activityTopic);
         document.querySelector("#activity-help").textContent =
           role === "lecturer"
-            ? "Students vote together on one improvement. The lecturer uses the group choice to explain what changes in the workflow."
-            : "Choose one workflow improvement for the shared class discussion.";
+            ? "Students vote together on the current lesson point. Use the group choice as the next discussion prompt."
+            : "Choose one option for the current lesson point.";
         document.querySelector("#activity-result").textContent = activityResultText(selectedActivity);
       }
 
@@ -403,7 +411,7 @@ export function renderHomePage(): string {
         }
 
         if (role === "lecturer") {
-          return "Group choice: " + activity + ". Ask students which workflow artifact must change next.";
+          return "Group choice: " + activity + ". Use this as the next discussion prompt.";
         }
 
         return "Group choice: " + activity + ".";
@@ -548,7 +556,6 @@ export function renderHomePage(): string {
 
       async function handleActivityVote(activity) {
         if (role !== "student") {
-          await postCommand({ action: "voteActivity", activity, voteDelta: 1 });
           return;
         }
 
