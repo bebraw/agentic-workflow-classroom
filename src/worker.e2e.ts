@@ -94,32 +94,32 @@ test("shares student activity votes across the room", async ({ browser }) => {
 
   await lecturer.goto(`/?room=${room}&role=lecturer`);
   await student.goto(`/?room=${room}&role=student`);
-  await student.getByRole("button", { name: /Require every handoff/ }).click();
+  await student.getByRole("button", { name: /Require each handoff/ }).click();
 
-  await expect(student.getByRole("button", { name: /Require every handoff.*1 vote/ })).toBeVisible({
+  await expect(student.getByRole("button", { name: /Require each handoff.*1 vote/ })).toBeVisible({
     timeout: 3000,
   });
-  await expect(student.getByText("Group choice: Require every handoff to name its input and output.")).toBeVisible({
+  await expect(student.getByText("Group choice: Require each handoff to include assumptions and evidence.")).toBeVisible({
     timeout: 3000,
   });
   await expect(student.getByText("Ask students which workflow artifact must change next")).toBeHidden();
-  await expect(lecturer.getByText("Group choice: Require every handoff to name its input and output")).toBeVisible({
+  await expect(lecturer.getByText("Group choice: Require each handoff to include assumptions and evidence")).toBeVisible({
     timeout: 3000,
   });
 
-  await student.getByRole("button", { name: /Make the Clarifier/ }).click();
-  await expect(student.getByRole("button", { name: /Require every handoff.*0 votes/ })).toBeVisible({
+  await student.getByRole("button", { name: /Ask the Clarifier/ }).click();
+  await expect(student.getByRole("button", { name: /Require each handoff.*0 votes/ })).toBeVisible({
     timeout: 3000,
   });
-  await expect(student.getByRole("button", { name: /Make the Clarifier.*1 vote/ })).toBeVisible({
+  await expect(student.getByRole("button", { name: /Ask the Clarifier.*1 vote/ })).toBeVisible({
     timeout: 3000,
   });
-  await expect(student.getByText("Group choice: Make the Clarifier ask one question first.")).toBeVisible({
+  await expect(student.getByText("Group choice: Ask the Clarifier to name audience and success criteria.")).toBeVisible({
     timeout: 3000,
   });
 
-  await student.getByRole("button", { name: /Make the Clarifier/ }).click();
-  await expect(student.getByRole("button", { name: /Make the Clarifier.*0 votes/ })).toBeVisible({
+  await student.getByRole("button", { name: /Ask the Clarifier/ }).click();
+  await expect(student.getByRole("button", { name: /Ask the Clarifier.*0 votes/ })).toBeVisible({
     timeout: 3000,
   });
   await expect(student.getByText("No group choice selected yet.")).toBeVisible({

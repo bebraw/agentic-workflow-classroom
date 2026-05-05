@@ -1,10 +1,10 @@
 export const DEFAULT_ROOM_ID = "classroom";
 
 export const activityOptions = [
-  "Make the Clarifier ask one question first",
-  "Run Resource Researcher and Activity Designer in parallel",
-  "Require every handoff to name its input and output",
-  "Ask the Evaluator to reject answers without evidence",
+  "Ask the Clarifier to name audience and success criteria",
+  "Run research and activity design in parallel after clarification",
+  "Require each handoff to include assumptions and evidence",
+  "Reject final plans when the trace does not support them",
 ];
 
 export interface ClassroomSession {

@@ -3,7 +3,7 @@ import { escapeHtml } from "./shared";
 
 const appTitle = "Agentic Workflow Classroom";
 const appDescription =
-  "A guided classroom demo that turns one simple request into visible agents, handoffs, parallel work, and evaluation checks.";
+  "A guided classroom demo that shows why agents need clear jobs, explicit handoffs, and checks before the final answer.";
 
 interface DemoStep {
   id: string;
@@ -34,46 +34,47 @@ const steps: DemoStep[] = [
     id: "baseline",
     label: "Baseline",
     title: "Start With One Human Request",
-    goal: "Students see why a plausible AI answer can hide missing work.",
-    roomQuestion: "What would a single chatbot have to guess before planning the workshop?",
+    goal: "Students see the hidden decisions inside a simple request.",
+    roomQuestion: "What must the system know before it can plan a useful beginner workshop?",
     notice:
-      "The request sounds simple, but the system does not yet know who should clarify goals, collect constraints, design activities, or check the plan.",
+      "The request names the final product, but not the audience, constraints, success criteria, or checks. Those missing decisions become work for the system.",
     timebox: "60 sec",
   },
   {
     id: "agents",
     label: "Step 1",
     title: "Give Each Agent One Job",
-    goal: "Students separate agent identity from general intelligence.",
-    roomQuestion: "Which responsibility should belong to a separate agent instead of one large prompt?",
-    notice: "Each agent has a role, an input it can accept, and an output other agents can use.",
+    goal: "Students see an agent as a bounded responsibility, not a smarter chatbot.",
+    roomQuestion: "Which part of the work would be easier to trust if one agent owned it?",
+    notice: "A useful agent has a named job, a specific input, and an output another part of the workflow can inspect.",
     timebox: "2 min",
   },
   {
     id: "workflow",
     label: "Step 2",
     title: "Arrange Sequential And Parallel Work",
-    goal: "Students see workflow shape before seeing implementation details.",
-    roomQuestion: "Which actions must happen first, and which can happen at the same time?",
-    notice: "The resource and activity agents can work in parallel after the learning goal is clarified.",
+    goal: "Students distinguish dependency from convenience.",
+    roomQuestion: "Which task needs the clarified goal first, and which tasks can happen at the same time after that?",
+    notice:
+      "Clarification must happen first. Resource research and activity design can then run in parallel because both use the clarified goal.",
     timebox: "3 min",
   },
   {
     id: "handoffs",
     label: "Step 3",
     title: "Inspect Packets And Handoffs",
-    goal: "Students understand that workflow quality depends on what each step passes forward.",
-    roomQuestion: "What information would break the next agent if it was missing from the handoff?",
-    notice: "Agentic workflows are not only boxes and arrows. The packet shape controls what downstream work can do.",
+    goal: "Students see that the handoff is the contract between agents.",
+    roomQuestion: "What must be in the packet so the next agent does not have to guess?",
+    notice: "Boxes and arrows are not enough. The packet must carry the assumptions, evidence, and decisions the next agent needs.",
     timebox: "3 min",
   },
   {
     id: "evaluation",
     label: "Step 4",
     title: "Evaluate The Workflow, Not Just The Answer",
-    goal: "Students learn to check traceability, trade-offs, and failure modes.",
-    roomQuestion: "How would we know whether this workflow behaved well enough to trust in class?",
-    notice: "The evaluator checks the intermediate reasoning path as well as the final workshop plan.",
+    goal: "Students learn to judge the trace, not only the polished output.",
+    roomQuestion: "Which trace evidence would make you trust or reject the workshop plan?",
+    notice: "The evaluator checks whether the path is traceable, the trade-offs are visible, and weak or unsupported claims are rejected.",
     timebox: "2 min",
   },
 ];
@@ -81,27 +82,27 @@ const steps: DemoStep[] = [
 const agents: DemoAgent[] = [
   {
     name: "Clarifier",
-    job: "Turns a vague workshop request into explicit learning needs and constraints.",
+    job: "Turns the vague workshop request into learning goals, audience assumptions, and constraints.",
     input: "One vague request",
-    output: "Need, audience, constraints",
+    output: "Learning goal, audience, constraints",
   },
   {
     name: "Resource Researcher",
-    job: "Finds materials, timing constraints, and examples the plan can use.",
+    job: "Finds examples, materials, and timing limits that fit the clarified goal.",
     input: "Clarified need",
-    output: "Candidate resources and constraints",
+    output: "Useful resources, limits, and gaps",
   },
   {
     name: "Activity Designer",
-    job: "Chooses the workshop flow and marks what can run in parallel.",
-    input: "Agents and evidence",
-    output: "Workshop sequence and handoffs",
+    job: "Turns the goal and evidence into a teachable workshop sequence.",
+    input: "Goal plus evidence",
+    output: "Activity sequence and handoffs",
   },
   {
     name: "Evaluator",
-    job: "Checks whether the workflow result is explainable and classroom-safe.",
+    job: "Checks whether the plan is supported by the trace and safe to use in class.",
     input: "Trace plus final answer",
-    output: "Passes, risks, next revision",
+    output: "Passes, risks, and revisions",
   },
 ];
 
@@ -109,26 +110,26 @@ const workflowActions: WorkflowAction[] = [
   {
     time: "T1",
     agent: "Clarifier",
-    work: "Ask what beginners must understand by the end of the workshop.",
-    handoff: "Learning objective, constraints, known confusion, and success criteria.",
+    work: "Ask what beginners should understand, what the class already knows, and what constraints matter.",
+    handoff: "Learning goal, audience assumptions, constraints, likely confusion, and success criteria.",
   },
   {
     time: "T2",
     agent: "Resource Researcher",
-    work: "Collect examples, timing limits, room constraints, and starter materials.",
-    handoff: "Resource list with assumptions, source notes, and gaps.",
+    work: "Collect examples, materials, time limits, and room constraints that fit the clarified goal.",
+    handoff: "Resource list with fit notes, assumptions, source notes, and gaps.",
   },
   {
     time: "T2",
     agent: "Activity Designer",
-    work: "Sketch the learner journey and mark parallel preparation branches.",
-    handoff: "Draft workshop flow with agent responsibilities.",
+    work: "Sketch the learner journey and mark where preparation can happen in parallel.",
+    handoff: "Draft workshop flow with activity purpose, timing, and handoff needs.",
   },
   {
     time: "T3",
     agent: "Evaluator",
-    work: "Check the trace for missing handoffs, hidden assumptions, and weak outputs.",
-    handoff: "Visible review notes and a safer workshop plan.",
+    work: "Check the trace for missing inputs, hidden assumptions, weak evidence, and unsafe claims.",
+    handoff: "Visible review notes, rejected claims, and a safer workshop plan.",
   },
 ];
 
@@ -202,15 +203,15 @@ export function renderHomePage(): string {
               </div>
               <p id="step-timebox" class="shrink-0 border border-app-line px-3 py-2 text-sm font-semibold text-app-text-soft" data-lecturer-only hidden>60 sec</p>
             </div>
-            <p id="step-goal" class="mt-4 max-w-3xl text-base leading-7 text-app-text-soft" data-lecturer-only hidden>Students see why a plausible AI answer can hide missing work.</p>
+            <p id="step-goal" class="mt-4 max-w-3xl text-base leading-7 text-app-text-soft" data-lecturer-only hidden>Students see the hidden decisions inside a simple request.</p>
             <div class="mt-5 grid gap-3 sm:grid-cols-2" data-lecturer-only hidden>
               <div class="border border-app-line bg-app-surface px-4 py-3">
                 <p class="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-app-text-soft">Ask The Room</p>
-                <p id="room-question" class="mt-2 leading-7 text-app-text">What would a single chatbot have to guess before planning the workshop?</p>
+                <p id="room-question" class="mt-2 leading-7 text-app-text">What must the system know before it can plan a useful beginner workshop?</p>
               </div>
               <div class="border border-app-line bg-app-surface px-4 py-3">
                 <p class="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-app-text-soft">What To Notice</p>
-                <p id="step-notice" class="mt-2 leading-7 text-app-text">The request sounds simple, but the system does not yet know who should clarify goals, collect constraints, design activities, or check the plan.</p>
+                <p id="step-notice" class="mt-2 leading-7 text-app-text">The request names the final product, but not the audience, constraints, success criteria, or checks. Those missing decisions become work for the system.</p>
               </div>
             </div>
           </section>
