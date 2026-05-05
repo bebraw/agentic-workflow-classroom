@@ -34,6 +34,10 @@ test("keeps student view controlled by lecturer reveal state", async ({ browser 
   await expect(student.getByRole("button", { name: /Claim room/i })).toBeHidden();
   await expect(student.getByRole("button", { name: /Reveal next step/i })).toBeHidden();
   await expect(student.getByRole("button", { name: /Give Each Agent One Job/i })).toBeHidden();
+  await expect(student.getByText("Ask The Room")).toBeHidden();
+  await expect(student.getByText("What To Notice")).toBeHidden();
+  await expect(student.getByText("Pedagogy Lens")).toBeHidden();
+  await expect(student.getByText("The lecturer uses the group choice")).toBeHidden();
   await expect(student.getByRole("link", { name: /Lecturer view/i })).toBeVisible();
 
   await lecturer.getByRole("button", { name: /Claim room/i }).click();
@@ -92,6 +96,10 @@ test("shares student activity votes across the room", async ({ browser }) => {
   await student.goto(`/?room=${room}&role=student`);
   await student.getByRole("button", { name: /Require every handoff/ }).click();
 
+  await expect(student.getByText("Group choice: Require every handoff to name its input and output.")).toBeVisible({
+    timeout: 3000,
+  });
+  await expect(student.getByText("Ask students which workflow artifact must change next")).toBeHidden();
   await expect(lecturer.getByText("Group choice: Require every handoff to name its input and output")).toBeVisible({
     timeout: 3000,
   });

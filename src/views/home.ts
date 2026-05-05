@@ -200,10 +200,10 @@ export function renderHomePage(): string {
                 <p id="step-label" class="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-app-accent">Baseline</p>
                 <h2 id="step-title" class="mt-2 text-3xl font-semibold leading-none tracking-normal text-app-text">Start With One Human Request</h2>
               </div>
-              <p id="step-timebox" class="shrink-0 border border-app-line px-3 py-2 text-sm font-semibold text-app-text-soft">60 sec</p>
+              <p id="step-timebox" class="shrink-0 border border-app-line px-3 py-2 text-sm font-semibold text-app-text-soft" data-lecturer-only hidden>60 sec</p>
             </div>
-            <p id="step-goal" class="mt-4 max-w-3xl text-base leading-7 text-app-text-soft">Students see why a plausible AI answer can hide missing work.</p>
-            <div class="mt-5 grid gap-3 sm:grid-cols-2">
+            <p id="step-goal" class="mt-4 max-w-3xl text-base leading-7 text-app-text-soft" data-lecturer-only hidden>Students see why a plausible AI answer can hide missing work.</p>
+            <div class="mt-5 grid gap-3 sm:grid-cols-2" data-lecturer-only hidden>
               <div class="border border-app-line bg-app-surface px-4 py-3">
                 <p class="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-app-text-soft">Ask The Room</p>
                 <p id="room-question" class="mt-2 leading-7 text-app-text">What would a single chatbot have to guess before planning the workshop?</p>
@@ -237,7 +237,7 @@ export function renderHomePage(): string {
 
             <section class="min-w-0 border border-app-line bg-white/88 p-4 shadow-panel sm:p-5">
               <p class="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-app-accent">Student Activity</p>
-              <p class="mt-2 text-sm leading-6 text-app-text-soft">Students vote together on one improvement. The lecturer uses the group choice to explain what changes in the workflow.</p>
+              <p id="activity-help" class="mt-2 text-sm leading-6 text-app-text-soft">Students vote together on one improvement. The lecturer uses the group choice to explain what changes in the workflow.</p>
               <div class="mt-4 grid gap-2" role="group" aria-label="Classroom activity choices">${activityButtons}</div>
               <p id="activity-result" class="mt-4 border-t border-app-line pt-4 text-sm leading-6 text-app-text-soft" aria-live="polite">No group choice selected yet.</p>
             </section>
@@ -262,7 +262,7 @@ export function renderHomePage(): string {
           </section>
         </div>
 
-        <aside class="lg:col-start-2 2xl:sticky 2xl:top-6 2xl:col-start-auto">
+        <aside class="lg:col-start-2 2xl:sticky 2xl:top-6 2xl:col-start-auto" data-lecturer-only hidden>
           <section class="border border-app-line bg-white/88 p-4 shadow-panel sm:p-5">
             <p class="text-[0.72rem] font-semibold uppercase tracking-[0.24em] text-app-accent">Pedagogy Lens</p>
             <h2 class="mt-3 text-2xl font-semibold leading-none tracking-normal">Keep it concrete</h2>
@@ -298,6 +298,9 @@ export function renderHomePage(): string {
 
       document.querySelector("#room-status").textContent = "Room: " + roomId;
       document.querySelector("#role-status").textContent = role === "lecturer" ? "Lecturer controls enabled" : "Student view";
+      document.querySelectorAll("[data-lecturer-only]").forEach((element) => {
+        element.hidden = role !== "lecturer";
+      });
       document.querySelectorAll("[data-lecturer-status], [data-lecturer-status-separator]").forEach((element) => {
         element.hidden = role !== "lecturer";
       });
@@ -373,13 +376,27 @@ export function renderHomePage(): string {
           button.classList.toggle("bg-app-accent-ghost", isSelected);
         });
 
-        document.querySelector("#activity-result").textContent = selectedActivity
-          ? "Group choice: " + selectedActivity + ". Ask students which workflow artifact must change next."
-          : "No group choice selected yet.";
+        document.querySelector("#activity-help").textContent =
+          role === "lecturer"
+            ? "Students vote together on one improvement. The lecturer uses the group choice to explain what changes in the workflow."
+            : "Choose one workflow improvement for the shared class discussion.";
+        document.querySelector("#activity-result").textContent = activityResultText(selectedActivity);
       }
 
       function updateRoleLinkUi(session) {
         lecturerLink.hidden = role === "student" && session.lecturerClaimed;
+      }
+
+      function activityResultText(activity) {
+        if (!activity) {
+          return "No group choice selected yet.";
+        }
+
+        if (role === "lecturer") {
+          return "Group choice: " + activity + ". Ask students which workflow artifact must change next.";
+        }
+
+        return "Group choice: " + activity + ".";
       }
 
       async function postCommand(command) {
